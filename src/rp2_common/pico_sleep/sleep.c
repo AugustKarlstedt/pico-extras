@@ -61,6 +61,7 @@ bool dormant_source_valid(dormant_source_t dormant_source)
 // In order to go into dormant mode we need to be running from a stoppable clock source:
 // either the xosc or rosc with no PLLs running. This means we disable the USB and ADC clocks
 // and all PLLs
+// NOTE: you may have to run setup_default_uart to reconfigure uart with new clocks afer this
 void sleep_run_from_dormant_source(dormant_source_t dormant_source) {
     assert(dormant_source_valid(dormant_source));
     _dormant_source = dormant_source;
@@ -138,9 +139,6 @@ void sleep_run_from_dormant_source(dormant_source_t dormant_source) {
         // Can disable xosc
         xosc_disable();
     }
-
-    // Reconfigure uart with new clocks
-    setup_default_uart();
 }
 
 static void processor_deep_sleep(void) {
@@ -282,6 +280,8 @@ void sleep_goto_dormant_until_pin(uint gpio_pin, bool edge, bool high) {
 }
 
 // To be called after waking up from sleep/dormant mode to restore system clocks properly
+// NOTE: UART needs to be reinitialised with the new clock frequencies for stable output
+// with e.g. `setup_default_uart();`
 void sleep_power_up(void)
 {
     // Re-enable the ring oscillator, which will essentially kickstart the proc
@@ -300,7 +300,4 @@ void sleep_power_up(void)
     powman_timer_set_1khz_tick_source_xosc();
     powman_timer_set_ms(restore_ms);
 #endif
-
-    // UART needs to be reinitialised with the new clock frequencies for stable output
-    setup_default_uart();
 }
